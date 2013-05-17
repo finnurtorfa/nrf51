@@ -1,0 +1,10 @@
+ifeq ($(findstring 86, $(ProgramFiles)), )
+	PROGFILES := C:/Program Files
+else
+	PROGFILES := C:/Program Files (x86)
+endif
+
+GNU_INSTALL_ROOT := $(PROGFILES)/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI
+GNU_VERSION := 4.6.3
+GNU_PREFIX := arm-none-eabi
+
