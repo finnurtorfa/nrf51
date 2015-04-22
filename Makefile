@@ -1,7 +1,7 @@
 #### Toolchain commands
 ####
-GCC_INSTALL_ROOT	:= /opt/arm-2012.09
-GCC_VERSION			 	:= 4.7.2
+GCC_INSTALL_ROOT	:= /usr
+GCC_VERSION			 	:= 4.9.2
 GCC_PREFIX			 	:= arm-none-eabi
 
 CC      := "$(GCC_INSTALL_ROOT)/bin/$(GCC_PREFIX)-gcc"
@@ -36,7 +36,7 @@ SDK_BLE					+= $(SDK_SRC)ble/ble_services/
 
 ### Device related stuff
 ###
-BOARD					:= BOARD_PCA100001
+BOARD					:= BOARD_PCA10001
 CPU						:= cortex-m0
 DEVICE 				:= NRF51
 DEVICESERIES 	:= nrf51
@@ -196,14 +196,11 @@ $(OUTPUT_DIR)/$(OUTPUT_NAME).hex : $(OUTPUT_DIR)/$(OUTPUT_NAME).out
 	$(OBJCOPY) -O ihex $(OUTPUT_DIR)/$(OUTPUT_NAME).out $(OUTPUT_DIR)/$(OUTPUT_NAME).hex
 
 ## Program device
-upload: rm.jlink upload.jlink stopdebug
+upload: upload.jlink stopdebug
 	$(JLINK) $(OUTPUT_DIR)/upload.jlink
 
-rm.jlink:
-	-rm -rf $(OUTPUT_DIR)/upload.jlink
-		
 upload.jlink:
-	echo "device nrf51822\nspeed 1000\nr\nloadbin $(OUTPUT_DIR)/$(OUTPUT_NAME).bin, $(FLASH_START_ADDRESS)\nr\ng\nexit\n" > $(OUTPUT_DIR)/upload.jlink
+	printf "device nrf51822\nspeed 1000\nr\nloadbin $(OUTPUT_DIR)/$(OUTPUT_NAME).bin, $(FLASH_START_ADDRESS)\nr\ng\nexit\n" > $(OUTPUT_DIR)/upload.jlink
 		  
 upload-softdevice: upload-softdevice.jlink stopdebug
 	@echo
@@ -216,7 +213,7 @@ upload-softdevice.jlink:
 	@echo
 	@echo "Do magic. Write to NVMC to enable erase, do erase all and erase UICR, reset, enable writing, load mainpart bin, load uicr bin. Reset."
 	@echo " Resetting in between is needed to disable the protections. "
-	echo "w4 4001e504 1\nloadbin \"$(OUTPUT_DIR)/_mainpart.bin\" 0\nloadbin \"$(OUTPUT_DIR)/_uicr.bin\" 0x10001000\nr\ng\nexit\n" > $(OUTPUT_DIR)/upload-softdevice.jlink
+	printf "w4 4001e504 1\nloadbin \"$(OUTPUT_DIR)/_mainpart.bin\" 0\nloadbin \"$(OUTPUT_DIR)/_uicr.bin\" 0x10001000\nr\ng\nexit\n" > $(OUTPUT_DIR)/upload-softdevice.jlink
 
 recover: recover.jlink erase-all.jlink pin-reset.jlink
 	$(JLINK) $(OUTPUT_DIR)/recover.jlink
@@ -224,16 +221,16 @@ recover: recover.jlink erase-all.jlink pin-reset.jlink
 	$(JLINK) $(OUTPUT_DIR)/pin-reset.jlink
 
 recover.jlink:
-	echo "si 0\nt0\nsleep 1\ntck1\nsleep 1\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\ntck0\nsleep 100\nsi 1\nr\nexit\n" > $(OUTPUT_DIR)/recover.jlink
+	printf "si 0\nt0\nsleep 1\ntck1\nsleep 1\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\nt0\nsleep 2\nt1\nsleep 2\ntck0\nsleep 100\nsi 1\nr\nexit\n" > $(OUTPUT_DIR)/recover.jlink
 
 pin-reset.jlink:
-	echo "device nrf51822\nw4 4001e504 2\nw4 40000544 1\nr\nexit\n" > $(OUTPUT_DIR)/pin-reset.jlink
+	printf "device nrf51822\nw4 40000544 1\nr\nexit\n" > $(OUTPUT_DIR)/pin-reset.jlink
 
 erase-all: erase-all.jlink
 	$(JLINK) $(OUTPUT_DIR)/erase-all.jlink
 
 erase-all.jlink:
-	echo "device nrf51822\nw4 4001e504 2\nw4 4001e50c 1\nw4 4001e514 1\nr\nexit\n" > $(OUTPUT_DIR)/erase-all.jlink
+	printf "device nrf51822\nw4 4001e504 2\nw4 4001e50c 1\nw4 4001e514 1\nr\nexit\n" > $(OUTPUT_DIR)/erase-all.jlink
 
 startdebug: stopdebug debug.jlink .gdbinit
 	$(JLINKGDBSERVER) -single -if swd -speed 1000 -port $(GDB_PORT_NUMBER) &
@@ -247,6 +244,6 @@ stopdebug:
 	echo "target remote localhost:$(GDB_PORT_NUMBER)\nmonitor flash download = 1\nmonitor flash device = nrf51822\nbreak main\nmon reset\n" > .gdbinit
 
 debug.jlink:
-	echo "Device nrf51822" > $(OUTPUT_DIR)/debug.jlink
+	printf "Device nrf51822" > $(OUTPUT_DIR)/debug.jlink
 		  
 .PHONY: upload upload-softdevice erase-all startdebug stopdebug
